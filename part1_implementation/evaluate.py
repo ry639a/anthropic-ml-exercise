@@ -11,7 +11,7 @@ from torch.nn import BCELoss
  * Ablation study (test at least one architectural or training choice) 
 """
 
-def evaluate(encoder, test_loader, criterion = BCELoss()):
+def evaluate(encoder, test_loader, device, criterion = BCELoss()):
     encoder.eval()
 
     total_loss = 0.
@@ -20,9 +20,9 @@ def evaluate(encoder, test_loader, criterion = BCELoss()):
     predictions = []
     with torch.no_grad():
         for i, batch in tqdm(enumerate(test_loader), total=len(test_loader)):
-            input_ids = batch["input_ids"]
-            attention_mask = batch["attention_mask"]
-            labels = batch["label"]
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = (input_ids == 0)
+            labels = batch["label"].to(device).long()
 
             logits, _ = encoder(input_ids, attention_mask)
             loss = criterion(logits, labels)

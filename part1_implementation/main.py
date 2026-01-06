@@ -161,9 +161,10 @@ def main():
 
     # Call evaluate
     results = evaluate.evaluate(
-        encoder=model_instance,
-        test_loader=test_dl,
-        criterion=CrossEntropyLoss()
+        model_instance,
+        test_dl,
+        device,
+        criterion=CrossEntropyLoss(),
     )
 
     print("Test Loss:", results["loss"])

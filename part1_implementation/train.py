@@ -87,14 +87,15 @@ def train_model(
 
                 logits, _ = model(input_ids, attention_mask)
                 loss = criterion(logits, labels)
-
                 val_loss += loss.item() * labels.size(0)
-                preds = torch.argmax(logits, dim=1)
 
-                correct += (preds == labels).sum().item()
+                predicted = torch.argmax(logits, dim=1)
+                print("predicted:", predicted)
+                print("labels:", labels)
+                correct += (predicted == labels).sum().item()
                 total += labels.size(0)
 
-        avg_val_loss = val_loss / len(val_loader.dataset)
+        avg_val_loss = val_loss / total
         val_acc = correct / total
 
         val_losses.append(avg_val_loss)
