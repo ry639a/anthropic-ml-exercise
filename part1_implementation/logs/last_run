@@ -1,0 +1,16 @@
+
+predicted: tensor([1, 1, 1, 0, 0, 1, 0, 0], device='cuda:0')
+labels: tensor([1, 0, 1, 0, 0, 1, 1, 0], device='cuda:0')
+Epoch 9/10 | Train Loss: 0.6871 | Val Loss: 0.6739 | Val Acc: 0.5828
+
+predicted: tensor([1, 1, 1, 0, 1, 1, 0, 0], device='cuda:0')
+labels: tensor([1, 0, 1, 0, 0, 1, 1, 0], device='cuda:0')
+Epoch 10/10 | Train Loss: 0.6860 | Val Loss: 0.6720 | Val Acc: 0.5868
+
+
+Test Loss: 0.676737030620575
+Test Accuracy: 0.57696
+Test perplexity: 1.9674475261194555
+100%|██████████| 391/391 [02:00<00:00,  3.26it/s]
+
+Process finished with exit code 0

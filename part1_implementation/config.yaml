@@ -9,9 +9,9 @@ tokenizer:
 
 training:
   batch_size: 64
-  lr: 0.001
+  lr: 0.0000002
   num_epochs: 10
-  scheduler: null     # YAML uses null, not None
+  scheduler: null
   optimizer:
     name: adam
     beta1: 0.9
@@ -20,15 +20,14 @@ training:
 
 model:
   name: encoder
-  embed_dim: 128
+  embed_dim: 256
   max_len: 256
-  vocab_size: 30000   # underscores can break PyYAML
+  vocab_size: 30000
   num_heads: 8
   num_layers: 4
   num_classes: 2
-  attention: "multi-head"   # hyphen must be quoted
 
-  # transformer specific hyperparameters
+  attention: "multi-head"
   d_model: 512
   num_encoder_layers: 6
   dim_feedforward: 2048

@@ -10,15 +10,15 @@ class Embeddings(nn.Module):
         self.token_embedding = nn.Embedding(
             vocab_size, embed_dim, padding_idx=pad_token
         )
+
         self.position_embedding = nn.Embedding(max_len, embed_dim)
+
         self.layer_norm = nn.LayerNorm(embed_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, input_ids):
         batch_size, seq_len = input_ids.size()
-        positions = torch.arange(
-            seq_len, device=input_ids.device
-        ).unsqueeze(0).expand(batch_size, seq_len)
+        positions = torch.arange(seq_len, device=input_ids.device)
 
         x = self.token_embedding(input_ids) + self.position_embedding(positions)
         x = self.layer_norm(x)
@@ -61,19 +61,21 @@ class MultiHeadAttention(nn.Module):
 
 # Transformer Encoder Layer
 class TransformerEncoderLayer(nn.Module):
-    def __init__(self, embed_dim, num_heads, ff_hidden_dim, dropout=0.1):
+    def __init__(self, embed_dim, num_heads, dim_feedforward, dropout=0.1):
         super().__init__()
         self.self_attn = MultiHeadAttention(embed_dim, num_heads, dropout)
-        self.norm1 = nn.LayerNorm(embed_dim)
-        self.norm2 = nn.LayerNorm(embed_dim)
 
+        # 2 −layer mlp
         self.ff = nn.Sequential(
-            nn.Linear(embed_dim, ff_hidden_dim),
-            nn.ReLU(),
+            nn.Linear(embed_dim, dim_feedforward),
             nn.Dropout(dropout),
-            nn.Linear(ff_hidden_dim, embed_dim),
+            nn.ReLU(),
+            nn.Linear(dim_feedforward, embed_dim),
         )
 
+        # Layers to apply between the main layers.
+        self.norm1 = nn.LayerNorm(embed_dim)
+        self.norm2 = nn.LayerNorm(embed_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, key_padding_mask=None):
@@ -92,7 +94,7 @@ class TransformerEncoder(nn.Module):
                  num_layers,
                  embed_dim,
                  num_heads,
-                 ff_hidden_dim,
+                 dim_feedforward,
                  vocab_size,
                  max_len,
                  num_classes,
@@ -106,13 +108,25 @@ class TransformerEncoder(nn.Module):
 
         self.layers = nn.ModuleList([
             TransformerEncoderLayer(
-                embed_dim, num_heads, ff_hidden_dim, dropout
+                embed_dim, num_heads, dim_feedforward, dropout
             )
             for _ in range(num_layers)
         ])
 
         self.classifier = nn.Linear(embed_dim, num_classes)
         self.dropout = nn.Dropout(dropout)
+
+        #self.init_weights()
+
+    def init_weights(self):
+        # Initialize all parameters in the model
+        for name, param in self.named_parameters():
+            if 'weight' in name and param.data.dim() == 2:
+                # Use Kaiming for weights of size [out_features, in_features]
+                nn.init.kaiming_uniform_(param.data)
+            elif 'bias' in name:
+                nn.init.zeros_(param.data)
+            # Add specific logic for QKV projection matrices if needed
 
     def forward(self, input_ids, attention_mask=None):
         """
@@ -125,6 +139,7 @@ class TransformerEncoder(nn.Module):
             x, attn = layer(x, attention_mask)
             attn_weights.append(attn)
 
+        #TODO
         # Mean pooling over non-padding tokens
         if attention_mask is not None:
             valid_mask = (~attention_mask).unsqueeze(-1)
@@ -144,12 +159,23 @@ def create_model_instance(config, device):
         num_layers=int(mcfg["num_layers"]),
         embed_dim=int(mcfg["embed_dim"]),
         num_heads=int(mcfg["num_heads"]),
-        ff_hidden_dim=int(mcfg["dim_feedforward"]),
+        dim_feedforward=int(mcfg["dim_feedforward"]),
         vocab_size=int(mcfg["vocab_size"]),
         max_len=int(mcfg["max_len"]),
         num_classes=int(mcfg["num_classes"]),
         dropout=float(mcfg["dropout"]),
         pad_token=0
     )
+
+    def initialize_weights(m):
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    encoder.apply(initialize_weights)
 
     return encoder.to(device)

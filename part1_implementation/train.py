@@ -1,13 +1,8 @@
 import matplotlib.pyplot as plt
 import torch
-import model
 
 # Attention plotting
 def plot_attention(attn_weights, tokens, layer=0, head=0):
-    """
-    attn_weights: list of tensors [(B, H, S, S), ...]
-    tokens: list of token strings (length <= S)
-    """
     attn = attn_weights[layer][0, head].detach().cpu().numpy()
 
     seq_len = min(len(tokens), attn.shape[-1])
@@ -31,17 +26,9 @@ def plot_attention(attn_weights, tokens, layer=0, head=0):
 
 
 # Training & Validation loops
-def train_model(
-    model,
-    train_loader,
-    val_loader,
-    optimizer,
-    criterion,
-    num_epochs=10,
-    patience=3,
-    device="cpu",
-    scheduler=None,
-):
+def train_model(model, train_loader, val_loader,
+    optimizer, criterion, num_epochs=10, patience=3,
+    device="cpu", scheduler=None, logger=logger):
     model.to(device)
 
     best_val_loss = float("inf")
@@ -59,12 +46,10 @@ def train_model(
 
             # PAD = 0 → True means padding
             attention_mask = (input_ids == 0)
-
             optimizer.zero_grad()
             logits, _ = model(input_ids, attention_mask)
             loss = criterion(logits, labels)
             loss.backward()
-
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
 
@@ -79,12 +64,11 @@ def train_model(
         correct = 0
         total = 0
 
-        with torch.no_grad():
+        with (torch.no_grad()):
             for batch in val_loader:
                 input_ids = batch["input_ids"].to(device)
                 labels = batch["label"].to(device).long()
                 attention_mask = (input_ids == 0)
-
                 logits, _ = model(input_ids, attention_mask)
                 loss = criterion(logits, labels)
                 val_loss += loss.item() * labels.size(0)
@@ -92,6 +76,8 @@ def train_model(
                 predicted = torch.argmax(logits, dim=1)
                 print("predicted:", predicted)
                 print("labels:", labels)
+                logger.debug(f"labels: {labels}")
+                logger.debug(f"predicted: {predicted}")
                 correct += (predicted == labels).sum().item()
                 total += labels.size(0)
 
@@ -125,13 +111,13 @@ def train_model(
 
 
 # Setup function
-def train_setup(model_instance, train_dataloader, val_dataloader, config, device="cpu"):
+def train_setup(model_instance, train_dataloader, val_dataloader,
+                config, device, logger):
     training_cfg = config["training"]
     optimizer_cfg = training_cfg["optimizer"]
 
     num_epochs = int(training_cfg.get("num_epochs", 10))
     lr = float(training_cfg["lr"])
-
 
     # Optimizer
     if optimizer_cfg["name"].lower() == "adam":
@@ -161,4 +147,5 @@ def train_setup(model_instance, train_dataloader, val_dataloader, config, device
         num_epochs=num_epochs,
         device=device,
         scheduler=scheduler,
+        logger=logger
     )

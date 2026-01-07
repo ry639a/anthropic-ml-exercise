@@ -9,13 +9,13 @@ from tokenizers import ByteLevelBPETokenizer
 import train
 import evaluate
 import model
-
+from sklearn.model_selection import train_test_split
 
 # Logging setup
 os.makedirs("logs", exist_ok=True)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler("logs/training.log")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -32,6 +32,8 @@ class IMDBDataset(Dataset):
         self.labels = labels
         self.tokenizer = tokenizer
         self.max_len = max_len
+
+        logger.debug(f"IMDBDataset labels: labels")
 
     def __len__(self):
         return len(self.texts)
@@ -57,35 +59,28 @@ class IMDBDataset(Dataset):
 def load_and_split_data():
     data = load_dataset("imdb")
 
-    train_data = data["train"].select(range(18000))
-    val_data = data["train"].select(range(18000, len(data["train"])))
-    test_data = data["test"]
+    training_data = data["train"]
+    train_text, val_text, train_labels, val_labels = (
+        train_test_split(training_data["text"], training_data["label"],
+                         test_size=0.2, random_state= 5, stratify=training_data["label"]))
 
-    imdb_text = (
-        list(train_data["text"])
-        + list(val_data["text"])
-        + list(test_data["text"])
-        + list(data["unsupervised"]["text"])
-    )
+    test_text = data["test"]["text"]
+    test_labels = data["test"]["label"]
+
+    imdb_text = ( list(training_data["text"]) +
+                  list(test_text) + list(data["unsupervised"]["text"]) )
 
     logger.info("Dataset split completed")
 
-    return (
-        imdb_text,
-        list(train_data["text"]),
-        list(val_data["text"]),
-        list(test_data["text"]),
-        list(train_data["label"]),
-        list(val_data["label"]),
-        list(test_data["label"]),
-    )
+    return (imdb_text, train_text, val_text, test_text,
+            train_labels, val_labels, test_labels)
 
 # Tokenizer
 def train_tokenizer(imdb_text):
     tokenizer = ByteLevelBPETokenizer()
     tokenizer.train_from_iterator(
         imdb_text,
-        vocab_size=30_000,
+        vocab_size=30000,
         min_frequency=2,
         special_tokens=["<pad>", "<s>", "</s>", "<unk>", "<mask>"],
     )
@@ -104,33 +99,22 @@ def get_tokenizer(imdb_text):
     return train_tokenizer(imdb_text)
 
 # DataLoaders
-def create_dataloaders(batch_size=64, max_len=128):
-    (
-        imdb_text,
-        train_text,
-        val_text,
-        test_text,
-        train_labels,
-        val_labels,
-        test_labels,
-    ) = load_and_split_data()
+def create_dataloaders(batch_size=256, max_len=256):
+    (imdb_text, train_text, val_text, test_text,
+     train_labels, val_labels, test_labels ) = load_and_split_data()
 
     tokenizer = get_tokenizer(imdb_text)
     logger.info("Tokenizer loaded")
+
+    logger.debug(f"labels: {train_labels[:20]}")
 
     train_dataset = IMDBDataset(train_text, train_labels, tokenizer, max_len)
     val_dataset = IMDBDataset(val_text, val_labels, tokenizer, max_len)
     test_dataset = IMDBDataset(test_text, test_labels, tokenizer, max_len)
 
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True
-    )
-    val_dataloader = DataLoader(
-        val_dataset, batch_size=batch_size, shuffle=False
-    )
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False
-    )
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     logger.info("DataLoaders created")
 
@@ -157,7 +141,7 @@ def main():
 
     model_instance = model.create_model_instance(config, device)
 
-    train.train_setup(model_instance, train_dl, val_dl, config, device)
+    train.train_setup(model_instance, train_dl, val_dl, config, device, logger)
 
     # Call evaluate
     results = evaluate.evaluate(
@@ -165,10 +149,12 @@ def main():
         test_dl,
         device,
         criterion=CrossEntropyLoss(),
+        logger
     )
 
     print("Test Loss:", results["loss"])
     print("Test Accuracy:", results["accuracy"])
+    print("Test perplexity:", results["perplexity"])
 
 
 if __name__ == "__main__":

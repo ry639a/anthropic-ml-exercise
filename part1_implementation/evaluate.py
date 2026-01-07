@@ -1,7 +1,6 @@
 import math
 import torch
 from tqdm import tqdm
-from torch.nn import BCELoss
 
 """ Analysis of model behavior on edge cases """
 """
@@ -11,7 +10,7 @@ from torch.nn import BCELoss
  * Ablation study (test at least one architectural or training choice) 
 """
 
-def evaluate(encoder, test_loader, device, criterion = BCELoss()):
+def evaluate(encoder, test_loader, device, criterion):
     encoder.eval()
 
     total_loss = 0.
@@ -36,6 +35,13 @@ def evaluate(encoder, test_loader, device, criterion = BCELoss()):
     avg_loss = total_loss / total_samples
     accuracy = total_correct / total_samples
     perplexity = math.exp(avg_loss)
+    text = batch['tokens']
+    with open("logs\\predictions.csv", "w") as f:
+        f.write("Reviews | predicted label | Actual label \n\n")
+        for i in range(len(text)):
+            f.write(text[i] + " | " + str(predictions[i]) + " | " + str(
+                labels[i]) + "\n")
+        f.close()
 
     return {
         "loss": avg_loss,
