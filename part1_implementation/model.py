@@ -116,7 +116,7 @@ class TransformerEncoder(nn.Module):
         self.classifier = nn.Linear(embed_dim, num_classes)
         self.dropout = nn.Dropout(dropout)
 
-        #self.init_weights()
+        self.init_weights()
 
     def init_weights(self):
         # Initialize all parameters in the model

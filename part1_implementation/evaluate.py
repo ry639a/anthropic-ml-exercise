@@ -10,7 +10,7 @@ from tqdm import tqdm
  * Ablation study (test at least one architectural or training choice) 
 """
 
-def evaluate(encoder, test_loader, device, criterion):
+def evaluate(encoder, test_loader, device, criterion, logger):
     encoder.eval()
 
     total_loss = 0.

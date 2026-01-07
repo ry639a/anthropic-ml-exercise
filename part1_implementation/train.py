@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import torch
 
+from part1_implementation.main import logger
+
+
 # Attention plotting
 def plot_attention(attn_weights, tokens, layer=0, head=0):
     attn = attn_weights[layer][0, head].detach().cpu().numpy()
@@ -74,8 +77,6 @@ def train_model(model, train_loader, val_loader,
                 val_loss += loss.item() * labels.size(0)
 
                 predicted = torch.argmax(logits, dim=1)
-                print("predicted:", predicted)
-                print("labels:", labels)
                 logger.debug(f"labels: {labels}")
                 logger.debug(f"predicted: {predicted}")
                 correct += (predicted == labels).sum().item()

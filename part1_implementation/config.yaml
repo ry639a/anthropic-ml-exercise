@@ -20,7 +20,7 @@ training:
 
 model:
   name: encoder
-  embed_dim: 256
+  embed_dim: 512
   max_len: 256
   vocab_size: 30000
   num_heads: 8
@@ -29,7 +29,7 @@ model:
 
   attention: "multi-head"
   d_model: 512
-  num_encoder_layers: 6
+  num_encoder_layers: 8
   dim_feedforward: 2048
   dropout: 0.1
   activation: relu

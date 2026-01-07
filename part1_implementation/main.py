@@ -144,13 +144,8 @@ def main():
     train.train_setup(model_instance, train_dl, val_dl, config, device, logger)
 
     # Call evaluate
-    results = evaluate.evaluate(
-        model_instance,
-        test_dl,
-        device,
-        criterion=CrossEntropyLoss(),
-        logger
-    )
+    results = evaluate.evaluate(model_instance, test_dl, device,
+                                criterion=CrossEntropyLoss(), logger=logger)
 
     print("Test Loss:", results["loss"])
     print("Test Accuracy:", results["accuracy"])
