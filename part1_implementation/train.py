@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
+from tqdm import tqdm
 
 from part1_implementation.main import logger
 
@@ -43,7 +44,7 @@ def train_model(model, train_loader, val_loader,
         model.train()
         total_loss = 0.0
 
-        for batch in train_loader:
+        for batch in tqdm(train_loader, total=len(train_loader)):
             input_ids = batch["input_ids"].to(device)
             labels = batch["label"].to(device).long()
 

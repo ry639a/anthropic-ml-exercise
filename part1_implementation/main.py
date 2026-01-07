@@ -42,6 +42,7 @@ class IMDBDataset(Dataset):
         encoding = self.tokenizer.encode(self.texts[idx])
 
         input_ids = encoding.ids[: self.max_len]
+        tokens = encoding.tokens[: self.max_len]
         attention_mask = [1] * len(input_ids)
 
         pad_len = self.max_len - len(input_ids)
@@ -53,6 +54,7 @@ class IMDBDataset(Dataset):
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
             "attention_mask": torch.tensor(attention_mask, dtype=torch.bool),
             "label": torch.tensor(int(self.labels[idx]), dtype=torch.long),
+            #"tokens": tokens
         }
 
 # Load & split data
@@ -127,6 +129,13 @@ def setup():
         return yaml.safe_load(f)
 
 
+def load_from_checkpoint(model_instance, device):
+    # load from checkpoint
+    checkpoint = torch.load("best_model.pt", weights_only=True,
+                            map_location=device)
+    model_instance.load_state_dict(checkpoint)
+    return model_instance
+
 # Main
 def main():
     config = setup()
@@ -141,15 +150,14 @@ def main():
 
     model_instance = model.create_model_instance(config, device)
 
-    train.train_setup(model_instance, train_dl, val_dl, config, device, logger)
+    #uncomment to load from checkpoint
+    model_instance = load_from_checkpoint(model_instance, device)
+
+    #train.train_setup(model_instance, train_dl, val_dl, config, device, logger)
 
     # Call evaluate
     results = evaluate.evaluate(model_instance, test_dl, device,
                                 criterion=CrossEntropyLoss(), logger=logger)
-
-    print("Test Loss:", results["loss"])
-    print("Test Accuracy:", results["accuracy"])
-    print("Test perplexity:", results["perplexity"])
 
 
 if __name__ == "__main__":

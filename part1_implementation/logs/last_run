@@ -14,3 +14,23 @@ Test perplexity: 1.9674475261194555
 100%|██████████| 391/391 [02:00<00:00,  3.26it/s]
 
 Process finished with exit code 0
+
+
+
+Run2 :
+
+Epoch 1/10 | Train Loss: 0.7294 | Val Loss: 0.6958 | Val Acc: 0.5204
+Epoch 2/10 | Train Loss: 0.7135 | Val Loss: 0.6885 | Val Acc: 0.5342
+Epoch 3/10 | Train Loss: 0.7057 | Val Loss: 0.6823 | Val Acc: 0.5648
+Epoch 4/10 | Train Loss: 0.7012 | Val Loss: 0.6768 | Val Acc: 0.5942
+Epoch 5/10 | Train Loss: 0.6950 | Val Loss: 0.6726 | Val Acc: 0.5986
+Epoch 6/10 | Train Loss: 0.6887 | Val Loss: 0.6666 | Val Acc: 0.6156
+Epoch 7/10 | Train Loss: 0.6830 | Val Loss: 0.6615 | Val Acc: 0.6202
+Epoch 8/10 | Train Loss: 0.6794 | Val Loss: 0.6565 | Val Acc: 0.6282
+Epoch 9/10 | Train Loss: 0.6738 | Val Loss: 0.6531 | Val Acc: 0.6274
+Epoch 10/10 | Train Loss: 0.6670 | Val Loss: 0.6485 | Val Acc: 0.6394
+
+100%|██████████| 391/391 [02:05<00:00,  3.12it/s]
+Test Loss: 0.6502479727935792
+Test Accuracy: 0.63112
+Test perplexity: 1.9160158899231376
